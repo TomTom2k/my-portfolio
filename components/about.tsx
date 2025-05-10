@@ -27,7 +27,7 @@ export default function About() {
 				handled <span className='font-medium'>freelance projects</span>{' '}
 				for both <span className='font-medium'>web</span> and{' '}
 				<span className='font-medium'>mobile apps</span>. I enjoy{' '}
-				<span className='italic'>solving challenging problems</span>
+				<span className='italic mr'>solving challenging problems</span>{' '}
 				and am always eager to{' '}
 				<span className='font-medium'>learn new technologies</span>.
 			</p>

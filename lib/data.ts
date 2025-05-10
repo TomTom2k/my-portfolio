@@ -37,7 +37,7 @@ export const experiencesData = [
 		title: 'TANCA.io - Front-End Developer',
 		location: 'Ho Chi Minh, Vietnam',
 		description:
-			'I worked as a web and mobile developer using React and React Native, gaining my first hands-on experience in real projects. I developed key features like news feed, calendar, digital signature, and information hub, and integrated with Bitrix24. One major challenge was balancing new feature development while fixing bugs reported by customer support, which helped sharpen my problem-solving skills. I collaborated closely with designers, backend developers, and clients, using tools like Postman, Figma, and GitLab.',
+			'Built web/mobile features (news feed, calendar, e-signature, Bitrix24, ...) with React/React Native. Handled new features, bug fixes, and teamwork using Postman, Figma, GitLab.',
 		icon: React.createElement(FaReact),
 		date: '8/2023 - Now',
 	},
@@ -45,7 +45,7 @@ export const experiencesData = [
 		title: 'CMC Media - Front-End Developer',
 		location: 'Ha Noi, Vietnam',
 		description:
-			'At CMC Media, I worked mainly with PHP Laravel, stepping out of my React comfort zone. My tasks included fixing bugs, updating outdated layouts, implementing multi-language support, and ensuring responsive design. Initially, understanding the API structure for debugging was challenging, but my AI-assisted learning skills helped me quickly adapt to the new tech stack. I worked closely with designers, backend developers, and clients to clarify requirements, and used Postman, Figma, and GitLab for daily tasks.',
+			'Worked with PHP Laravel on bug fixes, layout updates, multi-language, and mobile responsiveness. Adapted quickly, collaborating with design/dev teams.',
 		icon: React.createElement(CgWorkAlt),
 		date: '2/2025 - Now',
 	},

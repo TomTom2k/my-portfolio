@@ -31,8 +31,8 @@ export default function Project({
 				opacity: opacityProgess,
 			}}
 			className='group mb-3 sm:mb-8 last:mb-0'>
-			<section className='bg-gray-100 max-w-[42rem] border border-black/5 rounded-lg overflow-hidden sm:pr-8 relative sm:h-[20rem] hover:bg-gray-200 transition sm:group-even:pl-8 dark:text-white dark:bg-white/10 dark:hover:bg-white/20'>
-				<div className='pt-4 pb-7 px-5 sm:pl-10 sm:pr-2 sm:pt-10 sm:max-w-[50%] flex flex-col h-full sm:group-even:ml-[18rem]'>
+			<div className='bg-gray-100 max-w-[60rem] border border-black/5 rounded-lg overflow-hidden sm:pr-8 relative sm:h-[20rem] hover:bg-gray-200 transition sm:group-even:pl-8 dark:text-white dark:bg-white/10 dark:hover:bg-white/20'>
+				<div className='pt-4 pb-7 px-5 sm:pl-10 sm:pr-2 sm:pt-10 sm:max-w-[60%] flex flex-col h-full sm:group-even:ml-[20rem]'>
 					<h3 className='text-2xl font-semibold'>
 						{title}
 						<span>
@@ -40,7 +40,7 @@ export default function Project({
 								href={link}
 								target='_blank'
 								rel='noopener noreferrer'>
-								<FaExternalLinkAlt className='inline-block ml-2 h-3 w-3' />
+								<FaExternalLinkAlt className='text-blue-400 inline-block ml-2 h-3 w-3 cursor-pointer hover:scale-110 transition' />
 							</a>
 						</span>
 					</h3>
@@ -53,7 +53,7 @@ export default function Project({
 							</li>
 						))}
 					</ul>
-					<p className='mt-2 leading-relaxed text-gray-700 dark:text-white/70 overflow-y-auto max-h-32 pr-2'>
+					<p className='mt-2 leading-relaxed text-gray-700 dark:text-white/70 pr-2'>
 						{description}
 					</p>
 				</div>
@@ -75,7 +75,7 @@ export default function Project({
 
         group-even:right-[initial] group-even:-left-40'
 				/>
-			</section>
+			</div>
 		</motion.div>
 	);
 }
