@@ -39,7 +39,7 @@ export const experiencesData = [
 		description:
 			'Built web/mobile features (news feed, calendar, e-signature, Bitrix24, ...) with React/React Native. Handled new features, bug fixes, and teamwork using Postman, Figma, GitLab.',
 		icon: React.createElement(FaReact),
-		date: '8/2023 - Now',
+		date: '3/2024 - 9/2025',
 	},
 	{
 		title: 'CMC Media - Front-End Developer',
@@ -47,7 +47,7 @@ export const experiencesData = [
 		description:
 			'Worked with PHP Laravel on bug fixes, layout updates, multi-language, and mobile responsiveness. Adapted quickly, collaborating with design/dev teams.',
 		icon: React.createElement(CgWorkAlt),
-		date: '2/2025 - Now',
+		date: '2/2025 - 9/2025',
 	},
 ] as const;
 
