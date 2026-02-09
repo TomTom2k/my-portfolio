@@ -104,16 +104,34 @@ export default function Intro({ profile, socialLinks }: IntroProps) {
         </div>
       </div>
 
-      <motion.h1
-        className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl"
-        initial={{ opacity: 0, y: 100 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <span className="font-bold">Hello, I'm {name}.</span> I'm a{" "}
-        <span className="font-bold">{title}</span> with{" "}
-        <span className="font-bold">{experienceYears} years</span> of
-        experience. {introText}
-      </motion.h1>
+      <h1 className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl">
+        <motion.span
+          className="font-bold block sm:inline"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          Hello, I'm {name}.
+        </motion.span>{" "}
+        <motion.span
+          className="block sm:inline"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          I'm a <span className="font-bold">{title}</span> with{" "}
+          <span className="font-bold">{experienceYears} years</span> of
+          experience.
+        </motion.span>{" "}
+        <motion.p
+          className="mt-4 text-gray-700 dark:text-white/80"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          {introText}
+        </motion.p>
+      </h1>
 
       <motion.div
         className="flex flex-col sm:flex-row items-center justify-center gap-6 px-4 text-lg font-medium"

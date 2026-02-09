@@ -5,6 +5,7 @@ import SectionHeading from "./section-heading";
 import ProjectCard from "./project-card";
 import { useSectionInView } from "@/lib/hooks";
 import { Project as ProjectType } from "@/lib/supabase";
+import { motion } from "framer-motion";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay, EffectCoverflow } from "swiper/modules";
@@ -34,7 +35,13 @@ export default function Projects({ projects }: ProjectsProps) {
   return (
     <section ref={ref} id="projects" className="scroll-mt-28 mb-28 w-full">
       <SectionHeading>My projects</SectionHeading>
-      <div className="w-full px-4 xl:px-0 max-w-[80rem] mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 100 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.175 }}
+        viewport={{ once: true }}
+        className="w-full px-4 xl:px-0 max-w-[80rem] mx-auto"
+      >
         <style jsx global>{`
           .project-swiper .swiper-wrapper {
             transition-timing-function: linear !important;
@@ -75,7 +82,7 @@ export default function Projects({ projects }: ProjectsProps) {
             </SwiperSlide>
           ))}
         </Swiper>
-      </div>
+      </motion.div>
     </section>
   );
 }
