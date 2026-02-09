@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import {
   Profile,
   SocialLink,
@@ -11,8 +11,8 @@ import {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Create a Supabase client with no caching for GET requests
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Create a Supabase client with auth support (using cookies)
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
   global: {
     fetch: (url, options = {}) => {
       return fetch(url, {
