@@ -4,9 +4,22 @@ import Image from "next/image";
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { BsArrowRight, BsLinkedin } from "react-icons/bs";
+import { BsArrowRight, BsLinkedin, BsGlobe } from "react-icons/bs";
 import { HiDownload } from "react-icons/hi";
-import { FaGithubSquare } from "react-icons/fa";
+import {
+  FaGithubSquare,
+  FaTwitter,
+  FaFacebook,
+  FaInstagram,
+  FaYoutube,
+  FaTiktok,
+  FaDribbble,
+  FaBehance,
+  FaMedium,
+  FaDiscord,
+  FaTelegram,
+} from "react-icons/fa";
+import { SiGmail } from "react-icons/si";
 import { useSectionInView } from "@/lib/hooks";
 import { useActiveSectionContext } from "@/context/active-section-context";
 import { Profile, SocialLink } from "@/lib/supabase";
@@ -20,6 +33,18 @@ interface IntroProps {
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   BsLinkedin,
   FaGithubSquare,
+  FaTwitter,
+  FaFacebook,
+  FaInstagram,
+  FaYoutube,
+  FaTiktok,
+  FaDribbble,
+  FaBehance,
+  FaMedium,
+  FaDiscord,
+  FaTelegram,
+  SiGmail,
+  BsGlobe,
 };
 
 export default function Intro({ profile, socialLinks }: IntroProps) {

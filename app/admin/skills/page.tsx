@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,121 +22,34 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-
-interface Skill {
-  id: string;
-  name: string;
-  category: string;
-  order: number;
-  is_active: boolean;
-}
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { getSkills, createRecord, updateRecord, deleteRecord } from "@/lib/api";
+import { Skill } from "@/lib/supabase";
 
 const categories = ["Frontend", "Backend", "Mobile", "Database", "Tools"];
 
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<Skill[]>([
-    { id: "1", name: "HTML", category: "Frontend", order: 1, is_active: true },
-    { id: "2", name: "CSS", category: "Frontend", order: 2, is_active: true },
-    {
-      id: "3",
-      name: "JavaScript",
-      category: "Frontend",
-      order: 3,
-      is_active: true,
-    },
-    {
-      id: "4",
-      name: "TypeScript",
-      category: "Frontend",
-      order: 4,
-      is_active: true,
-    },
-    { id: "5", name: "React", category: "Frontend", order: 5, is_active: true },
-    {
-      id: "6",
-      name: "Next.js",
-      category: "Frontend",
-      order: 6,
-      is_active: true,
-    },
-    {
-      id: "7",
-      name: "React Native",
-      category: "Mobile",
-      order: 7,
-      is_active: true,
-    },
-    {
-      id: "8",
-      name: "Node.js",
-      category: "Backend",
-      order: 8,
-      is_active: true,
-    },
-    { id: "9", name: "Nestjs", category: "Backend", order: 9, is_active: true },
-    {
-      id: "10",
-      name: "Express",
-      category: "Backend",
-      order: 10,
-      is_active: true,
-    },
-    {
-      id: "11",
-      name: "MongoDB",
-      category: "Database",
-      order: 11,
-      is_active: true,
-    },
-    {
-      id: "12",
-      name: "PostgreSQL",
-      category: "Database",
-      order: 12,
-      is_active: true,
-    },
-    { id: "13", name: "Git", category: "Tools", order: 13, is_active: true },
-    {
-      id: "14",
-      name: "Tailwind",
-      category: "Frontend",
-      order: 14,
-      is_active: true,
-    },
-    {
-      id: "15",
-      name: "Socket.io",
-      category: "Backend",
-      order: 15,
-      is_active: true,
-    },
-    {
-      id: "16",
-      name: "Redux",
-      category: "Frontend",
-      order: 16,
-      is_active: true,
-    },
-    {
-      id: "17",
-      name: "Python",
-      category: "Backend",
-      order: 17,
-      is_active: true,
-    },
-    {
-      id: "18",
-      name: "Django",
-      category: "Backend",
-      order: 18,
-      is_active: true,
-    },
-  ]);
-
+  const [loading, setLoading] = useState(true);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Skill | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({ name: "", category: "Frontend" });
+
+  const loadSkills = async () => {
+    try {
+      const data = await getSkills();
+      setSkills(data);
+    } catch (error) {
+      toast.error("Không thể tải danh sách skills");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSkills();
+  }, []);
 
   const handleAdd = () => {
     setEditingItem(null);
@@ -146,43 +59,70 @@ export default function SkillsPage() {
 
   const handleEdit = (item: Skill) => {
     setEditingItem(item);
-    setFormData({ name: item.name, category: item.category });
+    setFormData({ name: item.name, category: item.category || "Frontend" });
     setIsOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name) {
       toast.error("Vui lòng điền tên skill");
       return;
     }
 
-    if (editingItem) {
-      setSkills((prev) =>
-        prev.map((s) => (s.id === editingItem.id ? { ...s, ...formData } : s)),
-      );
-      toast.success("Đã cập nhật!");
-    } else {
-      const newItem: Skill = {
-        id: Date.now().toString(),
-        ...formData,
-        order: skills.length + 1,
-        is_active: true,
+    setIsSaving(true);
+    try {
+      const payload = {
+        name: formData.name,
+        category: formData.category,
       };
-      setSkills((prev) => [...prev, newItem]);
-      toast.success("Đã thêm mới!");
+
+      if (editingItem) {
+        await updateRecord("skills", editingItem.id, payload);
+        toast.success("Đã cập nhật skill!");
+      } else {
+        await createRecord("skills", {
+          ...payload,
+          order: skills.length + 1,
+          is_active: true,
+        });
+        toast.success("Đã thêm skill mới!");
+      }
+      setIsOpen(false);
+      loadSkills();
+    } catch (error: any) {
+      toast.error(`Lỗi: ${error.message}`);
+    } finally {
+      setIsSaving(false);
     }
-    setIsOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setSkills((prev) => prev.filter((s) => s.id !== id));
-    toast.success("Đã xóa!");
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa skill này?")) return;
+
+    try {
+      await deleteRecord("skills", id);
+      setSkills((prev) => prev.filter((s) => s.id !== id));
+      toast.success("Đã xóa skill!");
+    } catch (error: any) {
+      toast.error(`Lỗi xóa: ${error.message}`);
+    }
   };
 
-  const toggleActive = (id: string) => {
-    setSkills((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, is_active: !s.is_active } : s)),
-    );
+  const toggleActive = async (skill: Skill) => {
+    try {
+      const newStatus = !skill.is_active;
+      // Optimistic update
+      setSkills((prev) =>
+        prev.map((s) =>
+          s.id === skill.id ? { ...s, is_active: newStatus } : s,
+        ),
+      );
+
+      await updateRecord("skills", skill.id, { is_active: newStatus });
+    } catch (error) {
+      toast.error("Không thể cập nhật trạng thái");
+      loadSkills();
+    }
   };
 
   const groupedSkills = categories.reduce(
@@ -192,6 +132,14 @@ export default function SkillsPage() {
     },
     {} as Record<string, Skill[]>,
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -250,10 +198,17 @@ export default function SkillsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={isSaving}
+              >
                 Hủy
               </Button>
-              <Button onClick={handleSave}>Lưu</Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Lưu
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -276,10 +231,7 @@ export default function SkillsPage() {
                     variant={skill.is_active ? "default" : "secondary"}
                     className="group cursor-pointer pl-3 pr-1 py-1"
                   >
-                    <span
-                      className="mr-1"
-                      onClick={() => toggleActive(skill.id)}
-                    >
+                    <span className="mr-1" onClick={() => toggleActive(skill)}>
                       {skill.name}
                     </span>
                     <button

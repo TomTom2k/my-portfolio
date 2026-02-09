@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,16 +30,14 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
-
-interface SocialLink {
-  id: string;
-  platform: string;
-  url: string;
-  icon: string;
-  order: number;
-  is_active: boolean;
-}
+import { Plus, Pencil, Trash2, GripVertical, Loader2 } from "lucide-react";
+import {
+  getSocialLinks,
+  createRecord,
+  updateRecord,
+  deleteRecord,
+} from "@/lib/api";
+import { SocialLink } from "@/lib/supabase";
 
 const iconOptions = [
   { value: "BsLinkedin", label: "LinkedIn" },
@@ -54,35 +52,37 @@ const iconOptions = [
   { value: "FaMedium", label: "Medium" },
   { value: "FaDiscord", label: "Discord" },
   { value: "FaTelegram", label: "Telegram" },
+  { value: "SiGmail", label: "Gmail" },
+  { value: "BsGlobe", label: "Website" },
 ];
 
 export default function SocialLinksPage() {
-  const [links, setLinks] = useState<SocialLink[]>([
-    {
-      id: "1",
-      platform: "LinkedIn",
-      url: "https://www.linkedin.com/in/nguyen-thanh-tin-b6640b271/",
-      icon: "BsLinkedin",
-      order: 1,
-      is_active: true,
-    },
-    {
-      id: "2",
-      platform: "GitHub",
-      url: "https://github.com/TomTom2k",
-      icon: "FaGithubSquare",
-      order: 2,
-      is_active: true,
-    },
-  ]);
-
+  const [loading, setLoading] = useState(true);
+  const [links, setLinks] = useState<SocialLink[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<SocialLink | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     platform: "",
     url: "",
     icon: "BsLinkedin",
   });
+
+  const loadLinks = async () => {
+    try {
+      const data = await getSocialLinks();
+      setLinks(data);
+    } catch (error) {
+      toast.error("Không thể tải danh sách social links");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLinks();
+  }, []);
 
   const handleAdd = () => {
     setEditingLink(null);
@@ -100,41 +100,69 @@ export default function SocialLinksPage() {
     setIsOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.platform || !formData.url) {
       toast.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
-    if (editingLink) {
-      setLinks((prev) =>
-        prev.map((l) => (l.id === editingLink.id ? { ...l, ...formData } : l)),
-      );
-      toast.success("Đã cập nhật link!");
-    } else {
-      const newLink: SocialLink = {
-        id: Date.now().toString(),
-        ...formData,
-        order: links.length + 1,
-        is_active: true,
-      };
-      setLinks((prev) => [...prev, newLink]);
-      toast.success("Đã thêm link mới!");
+    setIsSaving(true);
+    try {
+      if (editingLink) {
+        await updateRecord("social_links", editingLink.id, formData);
+        toast.success("Đã cập nhật link!");
+      } else {
+        await createRecord("social_links", {
+          ...formData,
+          order: links.length + 1,
+          is_active: true,
+        });
+        toast.success("Đã thêm link mới!");
+      }
+      setIsOpen(false);
+      loadLinks();
+    } catch (error: any) {
+      toast.error(`Lỗi: ${error.message}`);
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setLinks((prev) => prev.filter((l) => l.id !== id));
-    toast.success("Đã xóa link!");
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa link này?")) return;
+    try {
+      await deleteRecord("social_links", id);
+      setLinks((prev) => prev.filter((l) => l.id !== id));
+      toast.success("Đã xóa link!");
+    } catch (error: any) {
+      toast.error(`Lỗi xóa: ${error.message}`);
+    }
   };
 
-  const toggleActive = (id: string) => {
-    setLinks((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, is_active: !l.is_active } : l)),
+  const toggleActive = async (link: SocialLink) => {
+    try {
+      const newStatus = !link.is_active;
+      // Optimistic update
+      setLinks((prev) =>
+        prev.map((l) =>
+          l.id === link.id ? { ...l, is_active: newStatus } : l,
+        ),
+      );
+
+      await updateRecord("social_links", link.id, { is_active: newStatus });
+    } catch (error) {
+      toast.error("Không thể cập nhật trạng thái");
+      loadLinks(); // Revert
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -206,10 +234,17 @@ export default function SocialLinksPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={isSaving}
+              >
                 Hủy
               </Button>
-              <Button onClick={handleSave}>Lưu</Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Lưu
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -258,7 +293,7 @@ export default function SocialLinksPage() {
                     <Badge
                       variant={link.is_active ? "default" : "secondary"}
                       className="cursor-pointer"
-                      onClick={() => toggleActive(link.id)}
+                      onClick={() => toggleActive(link)}
                     >
                       {link.is_active ? "Hiển thị" : "Ẩn"}
                     </Badge>

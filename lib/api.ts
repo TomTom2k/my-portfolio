@@ -11,8 +11,8 @@ import {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Create a Supabase client with no caching
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Create a Supabase client with no caching for GET requests
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     fetch: (url, options = {}) => {
       return fetch(url, {
@@ -23,7 +23,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Fetch Profile
+// --- Fetch Functions ---
+
 export async function getProfile(): Promise<Profile | null> {
   const { data, error } = await supabase.from("profile").select("*").single();
 
@@ -34,12 +35,10 @@ export async function getProfile(): Promise<Profile | null> {
   return data;
 }
 
-// Fetch Social Links
 export async function getSocialLinks(): Promise<SocialLink[]> {
   const { data, error } = await supabase
     .from("social_links")
     .select("*")
-    .eq("is_active", true)
     .order("order", { ascending: true });
 
   if (error) {
@@ -49,12 +48,10 @@ export async function getSocialLinks(): Promise<SocialLink[]> {
   return data || [];
 }
 
-// Fetch Navigation Links
 export async function getNavigationLinks(): Promise<NavigationLink[]> {
   const { data, error } = await supabase
     .from("navigation_links")
     .select("*")
-    .eq("is_active", true)
     .order("order", { ascending: true });
 
   if (error) {
@@ -64,12 +61,10 @@ export async function getNavigationLinks(): Promise<NavigationLink[]> {
   return data || [];
 }
 
-// Fetch Experiences
 export async function getExperiences(): Promise<Experience[]> {
   const { data, error } = await supabase
     .from("experiences")
     .select("*")
-    .eq("is_active", true)
     .order("order", { ascending: true });
 
   if (error) {
@@ -79,12 +74,10 @@ export async function getExperiences(): Promise<Experience[]> {
   return data || [];
 }
 
-// Fetch Projects
 export async function getProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from("projects")
     .select("*")
-    .eq("is_active", true)
     .order("order", { ascending: true });
 
   if (error) {
@@ -94,12 +87,10 @@ export async function getProjects(): Promise<Project[]> {
   return data || [];
 }
 
-// Fetch Skills
 export async function getSkills(): Promise<Skill[]> {
   const { data, error } = await supabase
     .from("skills")
     .select("*")
-    .eq("is_active", true)
     .order("order", { ascending: true });
 
   if (error) {
@@ -109,7 +100,6 @@ export async function getSkills(): Promise<Skill[]> {
   return data || [];
 }
 
-// Fetch all portfolio data at once
 export async function getPortfolioData() {
   const [profile, socialLinks, navigationLinks, experiences, projects, skills] =
     await Promise.all([
@@ -129,4 +119,68 @@ export async function getPortfolioData() {
     projects,
     skills,
   };
+}
+
+// --- Generic Admin Actions ---
+
+export async function updateRecord(table: string, id: string, updates: any) {
+  const { data, error } = await supabase
+    .from(table)
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createRecord(table: string, record: any) {
+  const { data, error } = await supabase
+    .from(table)
+    .insert(record)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteRecord(table: string, id: string) {
+  const { error } = await supabase.from(table).delete().eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function updateListOrder(table: string, items: any[]) {
+  const { error } = await supabase
+    .from(table)
+    .upsert(items, { onConflict: "id" });
+
+  if (error) throw error;
+}
+
+// Specific helper for profile since it's common
+export async function updateProfile(id: string, updates: Partial<Profile>) {
+  return updateRecord("profile", id, updates);
+}
+
+// --- Storage Actions ---
+
+export async function uploadFile(bucket: string, file: File) {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = fileName;
+
+  const { error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, file);
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+
+  return data.publicUrl;
 }

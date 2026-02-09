@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,47 +23,31 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
-
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  image_url: string;
-  link: string;
-  order: number;
-  is_active: boolean;
-}
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ExternalLink,
+  Loader2,
+  Upload,
+} from "lucide-react";
+import {
+  getProjects,
+  createRecord,
+  updateRecord,
+  deleteRecord,
+  uploadFile,
+} from "@/lib/api";
+import { Project } from "@/lib/supabase";
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: "1",
-      title: "VNMusic",
-      description:
-        "I worked as a mobile developer on the VNMusic app for 3 months. The app lets users stream music, create playlists, and get notifications about new releases.",
-      tags: ["React Native", "TypeScript", "One Signal", "Redux"],
-      image_url: "/vnmusic.png",
-      link: "https://drive.google.com/drive/folders/1Zaw7i-p-gUc6Xx7sR1rie6Q_Gm_oIl3P",
-      order: 1,
-      is_active: true,
-    },
-    {
-      id: "2",
-      title: "Automation Tool Studio",
-      description:
-        "I worked on a project that converts user prompts into stories, generating characters, images, videos, sound, and voiceovers to create short videos.",
-      tags: ["NextJs", "Shadcn", "Tailwind", "i18n", "websockets"],
-      image_url: "/ai-studio.png",
-      link: "https://drive.google.com/drive/folders/1kXY7FVsGotmquPcAUZv20uUY6Zs83s-e",
-      order: 2,
-      is_active: true,
-    },
-  ]);
-
+  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Project | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -71,6 +55,21 @@ export default function ProjectsPage() {
     image_url: "",
     link: "",
   });
+
+  const loadProjects = async () => {
+    try {
+      const data = await getProjects();
+      setProjects(data);
+    } catch (error) {
+      toast.error("Không thể tải danh sách dự án");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   const handleAdd = () => {
     setEditingItem(null);
@@ -88,56 +87,106 @@ export default function ProjectsPage() {
     setEditingItem(item);
     setFormData({
       title: item.title,
-      description: item.description,
-      tags: item.tags.join(", "),
-      image_url: item.image_url,
-      link: item.link,
+      description: item.description || "",
+      tags: item.tags ? item.tags.join(", ") : "",
+      image_url: item.image_url || "",
+      link: item.link || "",
     });
     setIsOpen(true);
   };
 
-  const handleSave = () => {
+  const handleFileUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const publicUrl = await uploadFile("portfolio", file);
+      setFormData((prev) => ({ ...prev, image_url: publicUrl }));
+      toast.success("Tải ảnh thành công!");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(`Lỗi tải ảnh: ${error.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
     if (!formData.title) {
       toast.error("Vui lòng điền tên project");
       return;
     }
 
-    const tagsArray = formData.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
+    setIsSaving(true);
+    try {
+      const tagsArray = formData.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
 
-    if (editingItem) {
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        tags: tagsArray,
+        image_url: formData.image_url,
+        link: formData.link,
+      };
+
+      if (editingItem) {
+        await updateRecord("projects", editingItem.id, payload);
+        toast.success("Đã cập nhật dự án!");
+      } else {
+        await createRecord("projects", {
+          ...payload,
+          order: projects.length + 1,
+          is_active: true,
+        });
+        toast.success("Đã thêm dự án mới!");
+      }
+
+      setIsOpen(false);
+      loadProjects();
+    } catch (error: any) {
+      toast.error(`Lỗi: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa dự án này?")) return;
+
+    try {
+      await deleteRecord("projects", id);
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Đã xóa dự án!");
+    } catch (error: any) {
+      toast.error(`Lỗi xóa: ${error.message}`);
+    }
+  };
+
+  const toggleActive = async (project: Project) => {
+    try {
+      const newStatus = !project.is_active;
+      // Optimistic update
       setProjects((prev) =>
         prev.map((p) =>
-          p.id === editingItem.id ? { ...p, ...formData, tags: tagsArray } : p,
+          p.id === project.id ? { ...p, is_active: newStatus } : p,
         ),
       );
-      toast.success("Đã cập nhật!");
-    } else {
-      const newItem: Project = {
-        id: Date.now().toString(),
-        ...formData,
-        tags: tagsArray,
-        order: projects.length + 1,
-        is_active: true,
-      };
-      setProjects((prev) => [...prev, newItem]);
-      toast.success("Đã thêm mới!");
+
+      await updateRecord("projects", project.id, { is_active: newStatus });
+    } catch (error) {
+      toast.error("Không thể cập nhật trạng thái");
+      loadProjects(); // Revert on error
     }
-    setIsOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setProjects((prev) => prev.filter((p) => p.id !== id));
-    toast.success("Đã xóa!");
-  };
-
-  const toggleActive = (id: string) => {
-    setProjects((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, is_active: !p.is_active } : p)),
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -155,7 +204,7 @@ export default function ProjectsPage() {
               Thêm mới
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>
                 {editingItem ? "Sửa Project" : "Thêm Project"}
@@ -201,18 +250,55 @@ export default function ProjectsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="image_url">Image URL</Label>
-                <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      image_url: e.target.value,
-                    }))
-                  }
-                  placeholder="/project-image.png hoặc https://..."
-                />
+                <Label htmlFor="image_url">Hình ảnh</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="image_url"
+                    value={formData.image_url}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        image_url: e.target.value,
+                      }))
+                    }
+                    placeholder="/project-image.png hoặc https://..."
+                  />
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file);
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() =>
+                        document.getElementById("file-upload")?.click()
+                      }
+                      disabled={uploading}
+                    >
+                      {uploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                {formData.image_url && (
+                  <div className="mt-2 relative w-full h-40 rounded border overflow-hidden">
+                    <img
+                      src={formData.image_url}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="link">Demo/Source Link</Label>
@@ -227,10 +313,17 @@ export default function ProjectsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={isSaving}
+              >
                 Hủy
               </Button>
-              <Button onClick={handleSave}>Lưu</Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Lưu
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -264,15 +357,24 @@ export default function ProjectsPage() {
                 <Badge
                   variant={project.is_active ? "default" : "secondary"}
                   className="cursor-pointer"
-                  onClick={() => toggleActive(project.id)}
+                  onClick={() => toggleActive(project)}
                 >
                   {project.is_active ? "Hiển thị" : "Ẩn"}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
+              {project.image_url && (
+                <div className="mb-4 h-48 w-full rounded-md overflow-hidden border">
+                  <img
+                    src={project.image_url}
+                    alt={project.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
               <div className="flex flex-wrap gap-1 mb-4">
-                {project.tags.map((tag) => (
+                {project.tags?.map((tag) => (
                   <Badge key={tag} variant="outline" className="text-xs">
                     {tag}
                   </Badge>
