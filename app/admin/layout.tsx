@@ -7,15 +7,17 @@ export const metadata: Metadata = {
   description: "Manage your portfolio website content",
 };
 
+import ThemeContextProvider from "@/context/theme-context";
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <ThemeContextProvider>
       <AppSidebar>{children}</AppSidebar>
       <Toaster />
-    </>
+    </ThemeContextProvider>
   );
 }

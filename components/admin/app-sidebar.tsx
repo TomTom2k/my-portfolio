@@ -1,5 +1,7 @@
 "use client";
 
+import { useTheme } from "@/context/theme-context";
+
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -26,6 +28,8 @@ import {
   Lightbulb,
   Navigation,
   Settings,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const menuItems = [
@@ -40,6 +44,7 @@ const menuItems = [
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <SidebarProvider>
@@ -78,8 +83,18 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-white/80 backdrop-blur-sm px-6 dark:bg-gray-950/80">
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-white/80 backdrop-blur-sm px-6 dark:bg-gray-950/80">
           <SidebarTrigger />
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {theme === "light" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
         </header>
         <div className="p-6">{children}</div>
       </SidebarInset>
