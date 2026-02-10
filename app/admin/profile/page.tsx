@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -193,10 +194,12 @@ export default function ProfilePage() {
               <div className="flex items-center gap-4">
                 <div className="relative h-20 w-20 rounded-full bg-muted overflow-hidden border">
                   {profile.avatar_url ? (
-                    <img
+                    <Image
                       src={profile.avatar_url}
                       alt="Avatar"
-                      className="h-full w-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="80px"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-muted-foreground">

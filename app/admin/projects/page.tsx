@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -292,10 +293,12 @@ export default function ProjectsPage() {
                 </div>
                 {formData.image_url && (
                   <div className="mt-2 relative w-full h-40 rounded border overflow-hidden">
-                    <img
+                    <Image
                       src={formData.image_url}
                       alt="Preview"
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, 640px"
                     />
                   </div>
                 )}
@@ -365,11 +368,13 @@ export default function ProjectsPage() {
             </CardHeader>
             <CardContent>
               {project.image_url && (
-                <div className="mb-4 h-48 w-full rounded-md overflow-hidden border">
-                  <img
+                <div className="mb-4 h-48 w-full rounded-md overflow-hidden border relative">
+                  <Image
                     src={project.image_url}
                     alt={project.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 </div>
               )}
