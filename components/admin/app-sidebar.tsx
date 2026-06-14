@@ -26,6 +26,7 @@ import {
   Briefcase,
   FolderKanban,
   Lightbulb,
+  FileText,
   Settings,
   Sun,
   Moon,
@@ -38,6 +39,7 @@ const menuItems = [
   { title: "Experiences", url: "/admin/experiences", icon: Briefcase },
   { title: "Projects", url: "/admin/projects", icon: FolderKanban },
   { title: "Skills", url: "/admin/skills", icon: Lightbulb },
+  { title: "CVs", url: "/admin/cvs", icon: FileText },
 ];
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
